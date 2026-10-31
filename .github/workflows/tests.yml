@@ -27,8 +27,6 @@ jobs:
         os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     env:
-      WECHAT_READER_HOME: ${{ runner.temp }}/wechat reader setup
-      CODEX_HOME: ${{ runner.temp }}/codex config
       WECHAT_READER_NONINTERACTIVE: "1"
       PYTHONIOENCODING: utf-8
     steps:
@@ -41,9 +39,13 @@ jobs:
         run: |
           import os
           from pathlib import Path
-          root = Path(os.environ['CODEX_HOME'])
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          root = temporary / 'codex config'
           root.mkdir(parents=True)
           (root / 'config.toml').write_text('# keep this comment\nmodel = "keep"\n')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as stream:
+              stream.write(f'WECHAT_READER_HOME={temporary / "wechat reader setup"}\n')
+              stream.write(f'CODEX_HOME={root}\n')
       - name: macOS first install and reinstall
         if: runner.os == 'macOS'
         shell: bash
