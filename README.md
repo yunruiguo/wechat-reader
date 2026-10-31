@@ -7,6 +7,21 @@ Any remaining captcha requires manual verification. No API key required.
 供 Codex 本机调用的 MCP 工具。无需 OpenAI API Key，不调用付费模型。
 首版仅支持 `https://mp.weixin.qq.com/s/...` 和 `/s?...` 微信文章链接。
 
+## 一键安装（推荐）
+
+下载 [macOS / Windows 一键安装包](https://github.com/yunruiguo/wechat-reader/releases/download/v0.2.0/wechat-reader-setup-v0.2.0.zip)，解压后双击：
+
+- macOS：`Install-macOS.command`
+- Windows：`Install-Windows.cmd`
+
+安装器自动准备独立 Python 环境、检查浏览器和 MCP 工具、备份并更新 Codex 配置。无需 Git、预装 Python 或手动编辑配置。没有 Chrome 时自动下载工具专用浏览器。
+
+看到“安装就绪”后重新打开 Codex，即可使用。首次安装需要联网下载依赖；系统可能要求确认运行脚本。
+
+**[查看三步图文教程 →](docs/quickstart.md)**
+
+![安装步骤示意](docs/quickstart.png)
+
 ## 在 Codex 中使用
 
 注册后的工具名：`read_wechat_article`。
@@ -18,7 +33,7 @@ Any remaining captcha requires manual verification. No API key required.
 - 如 Chrome 能正常打开文章，自动完成读取；如果仍有验证码或扫码，需你手动完成。默认等待 20 秒，最多 30 秒，之后关闭窗口。未完成可再次尝试。
 - `use_browser=true` 直接使用浏览器；`use_browser=false` 仅使用 HTTP，不打开窗口。省略此参数或传 `null` 则自动切换。
 - 浏览器默认使用 `~/.wechat-reader/browser-profile`，不读取日常 Chrome 个人资料。可通过 `WECHAT_READER_PROFILE` 环境变量指定目录。该目录保存浏览会话数据，不应上传。
-- 浏览器模式需要本机已安装 Google Chrome；首次使用可能触发系统授权提示。
+- 浏览器优先使用本机 Google Chrome；未安装时使用一键安装器下载的 Chromium。首次使用可能触发系统授权提示。
 - 长文章返回 `next_offset`；继续读取时把它作为 `offset`，直到为 `null`。
 - 图片仅返回 URL，没有 OCR，不能据此声称已理解图片。纯图片文章的 `text` 可能为空。
 - 不自动解决验证码；微信限制、登录要求、删除和页面改版仍可能导致读取失败。
@@ -36,9 +51,9 @@ Any remaining captcha requires manual verification. No API key required.
 {"url":"https://mp.weixin.qq.com/s/2wGaYMDIR_UFYCekw23MDw","use_browser":true,"wait_seconds":30}
 ```
 
-## 安装与注册
+## 手动安装与注册（开发者）
 
-需要 Python 3.11 或更高版本；浏览器模式另需 Google Chrome 和可显示窗口的桌面环境。
+手动安装需要 Python 3.11 或更高版本；浏览器模式需要可显示窗口的桌面环境。
 以下是 macOS / Linux 的安装命令（Windows 使用虚拟环境中的 `Scripts` 目录）：
 
 ```sh
@@ -92,7 +107,7 @@ git pull --ff-only
 ## 许可证与范围
 
 代码以 [MIT 许可证](LICENSE) 发布。许可证适用于本项目代码，不授予第三方文章或图片的再发布权。
-浏览器模式已在 macOS + Google Chrome 上实测；自动测试不覆盖人工验证或其他桌面系统。
+安装器覆盖 macOS 和 Windows 的安装、重复安装及自检；浏览器读取在 macOS 上实测。自动测试不覆盖人工验证码。
 本项目是独立工具，与微信、腾讯或 OpenAI 无隶属关系。
 
 参考：[Codex MCP 配置](https://developers.openai.com/codex/mcp/)、[官方 MCP Python SDK 1.x](https://github.com/modelcontextprotocol/python-sdk/tree/v1.x)、[Playwright 浏览器 API](https://playwright.dev/python/docs/api/class-browsertype)。

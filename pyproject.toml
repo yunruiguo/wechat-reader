@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wechat-article-reader"
-version = "0.1.1"
+version = "0.2.0"
 description = "Read WeChat articles for local MCP clients"
 readme = "README.md"
 license = "MIT"
@@ -12,15 +12,16 @@ license-files = ["LICENSE"]
 authors = [{name = "Yunrui Guo"}]
 keywords = ["wechat", "mcp", "codex", "article-reader"]
 requires-python = ">=3.11"
-dependencies = ["beautifulsoup4>=4.12,<5", "httpx>=0.27,<1", "mcp>=1.20,<2", "playwright>=1.50,<2"]
+dependencies = ["beautifulsoup4>=4.12,<5", "httpx>=0.27,<1", "mcp>=1.20,<2", "playwright>=1.50,<2", "tomlkit>=0.13,<1"]
 
 [project.scripts]
 wechat-reader = "wechat_reader:main"
 wechat-reader-mcp = "wechat_reader_server:main"
+wechat-reader-setup = "wechat_reader_setup:main"
 
 [project.urls]
 Repository = "https://github.com/yunruiguo/wechat-reader"
 Issues = "https://github.com/yunruiguo/wechat-reader/issues"
 
 [tool.setuptools]
-py-modules = ["wechat_reader", "wechat_reader_server"]
+py-modules = ["wechat_reader", "wechat_reader_server", "wechat_reader_setup"]

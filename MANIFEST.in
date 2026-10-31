@@ -1,4 +1,6 @@
 include server.py
+include Install-macOS.command Install-Windows.cmd install.ps1
+recursive-include docs *.md *.svg *.png
 recursive-include tests *.py *.html
 prune .browser-profile
 prune .venv

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1050" viewBox="0 0 1120 1050" role="img" aria-labelledby="title desc">
+<title id="title">wechat-reader 三步安装</title><desc id="desc">下载并解压安装包，双击对应系统的安装器，重新打开 Codex 后粘贴微信文章链接。安装器自动准备 Python、检查浏览器和备份配置。</desc>
+<defs><style>text{font-family:'PingFang SC','Microsoft YaHei',sans-serif;fill:#173a47}.title{font-size:42px;font-weight:700}.h{font-size:29px;font-weight:650}.body{font-size:23px}.small{font-size:20px;fill:#47636d}.mono{font-family:Menlo,Consolas,monospace;font-size:21px}.number{font-size:28px;font-weight:700;fill:white}.ok{fill:#167763}</style></defs>
+<rect width="1120" height="1050" fill="#f0f6f5"/>
+<text x="56" y="76" class="title">微信文章，交给 Codex 读</text>
+<text x="56" y="116" class="body">wechat-reader · macOS / Windows · 无需先装 Python 或 Git</text>
+<rect x="48" y="153" width="1024" height="230" rx="22" fill="white"/>
+<circle cx="94" cy="201" r="25" fill="#167763"/><text x="85" y="211" class="number">1</text>
+<text x="138" y="211" class="h">下载并解压</text>
+<text x="138" y="252" class="body">打开 GitHub 发布页，下载安装包，先解压再打开。</text>
+<rect x="138" y="278" width="870" height="68" rx="12" fill="#edf5f8"/>
+<path d="M166 300h22l8 8h29v23h-59z" fill="#48a495"/>
+<text x="245" y="320" class="mono">wechat-reader-setup-v0.2.0.zip</text>
+<rect x="48" y="403" width="1024" height="343" rx="22" fill="white"/>
+<circle cx="94" cy="451" r="25" fill="#167763"/><text x="85" y="461" class="number">2</text>
+<text x="138" y="461" class="h">双击对应系统的安装器</text>
+<text x="138" y="503" class="mono">Mac: Install-macOS.command</text>
+<text x="138" y="539" class="mono">Windows: Install-Windows.cmd</text>
+<rect x="138" y="564" width="870" height="148" rx="12" fill="#edf5f0"/>
+<g fill="none" stroke="#167763" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M163 589l7 7 14-16M163 625l7 7 14-16M163 661l7 7 14-16"/></g>
+<text x="198" y="600" class="body ok">自动准备独立 Python 环境</text>
+<text x="198" y="636" class="body ok">检查浏览器与读取工具</text>
+<text x="198" y="672" class="body ok">备份并配置 Codex</text>
+<rect x="48" y="766" width="1024" height="208" rx="22" fill="white"/>
+<circle cx="94" cy="814" r="25" fill="#167763"/><text x="85" y="824" class="number">3</text>
+<text x="138" y="824" class="h">重新打开 Codex，粘贴链接</text>
+<rect x="138" y="849" width="870" height="84" rx="12" fill="#edf5f8"/>
+<text x="162" y="883" class="body">用 wechat-reader 读取这个微信链接并总结：</text>
+<text x="162" y="915" class="mono">https://mp.weixin.qq.com/s/...</text>
+<text x="56" y="1013" class="small">安装步骤示意（非产品截图） · 首次需联网 · 验证码或扫码仍需人工完成</text>
+</svg>

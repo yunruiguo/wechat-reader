@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import os
+import platform
 import re
 import sys
 from pathlib import Path
@@ -15,6 +16,19 @@ from bs4 import BeautifulSoup, Comment, NavigableString, Tag
 MAX_BYTES = 5 * 1024 * 1024
 PROFILE = Path(os.environ.get("WECHAT_READER_PROFILE", str(Path.home() / ".wechat-reader" / "browser-profile"))).expanduser()
 BLOCKS = {"p", "div", "section", "blockquote", "li", "h1", "h2", "h3", "h4", "tr"}
+
+
+def chrome_executable() -> Path | None:
+    """Locate installed Chrome without consulting the user's browser profile."""
+    if platform.system() == "Darwin":
+        candidates = [Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+                      Path.home() / "Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
+    elif platform.system() == "Windows":
+        candidates = [Path(os.environ[key]) / "Google/Chrome/Application/chrome.exe"
+                      for key in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA") if key in os.environ]
+    else:
+        candidates = [Path("/opt/google/chrome/chrome"), Path("/usr/bin/google-chrome")]
+    return next((path for path in candidates if path.is_file()), None)
 
 
 def validate_url(url: str, *, article: bool = True) -> str:
@@ -122,8 +136,10 @@ async def read_browser(url: str, wait_seconds: int, offset: int, max_chars: int)
     from playwright.async_api import async_playwright
 
     async with async_playwright() as playwright:
+        chrome = chrome_executable()
         context = await playwright.chromium.launch_persistent_context(
-            str(PROFILE), channel="chrome", headless=False, accept_downloads=False)
+            str(PROFILE), headless=False, accept_downloads=False,
+            **({"executable_path": str(chrome)} if chrome else {}))
         try:
             page = await context.new_page()
 
