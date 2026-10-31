@@ -151,9 +151,11 @@ async def read_browser(url: str, wait_seconds: int, offset: int, max_chars: int)
             await context.close()
 
 
-async def read_article(url: str, *, use_browser: bool = False, wait_seconds: int = 20,
+async def read_article(url: str, *, use_browser: bool | None = None, wait_seconds: int = 20,
                        offset: int = 0, max_chars: int = 20000) -> dict:
-    """Read HTTP by default; explicitly opt in to a visible browser for verification."""
+    """Try HTTP, then a visible browser on verification; False forces HTTP only."""
+    method = "browser" if use_browser else "http"
+    attempted_methods = [method]
     try:
         validate_url(url)
         if not 0 <= wait_seconds <= 30 or offset < 0 or not 1 <= max_chars <= 100000:
@@ -162,21 +164,33 @@ async def read_article(url: str, *, use_browser: bool = False, wait_seconds: int
             result = await read_browser(url, wait_seconds, offset, max_chars)
         else:
             result = parse_article(await fetch_html(url), url, offset=offset, max_chars=max_chars)
-        return {**result, "method": "browser" if use_browser else "http"}
+            if use_browser is None and result["status"] == "verification_required":
+                method = "browser"
+                attempted_methods.append(method)
+                result = await read_browser(url, wait_seconds, offset, max_chars)
+        if method == "browser" and result["status"] == "verification_required":
+            result["message"] = "浏览器中仍需人工验证。请再次读取并在弹出的窗口中手动完成验证。"
+        return {**result, "method": method, "attempted_methods": attempted_methods}
     except (ValueError, httpx.HTTPError) as error:
-        return {"status": "error", "url": url, "message": str(error), "content_is_untrusted": True}
+        return {"status": "error", "url": url, "message": str(error), "content_is_untrusted": True,
+                "method": method, "attempted_methods": attempted_methods}
     except Exception as error:
         # Browser launch/close errors must become tool results, not kill the server.
-        if use_browser:
+        if method == "browser":
             return {"status": "browser_error", "url": url, "message": str(error),
-                    "content_is_untrusted": True}
+                    "content_is_untrusted": True, "method": method,
+                    "attempted_methods": attempted_methods}
         raise
 
 
 def main():
     parser = argparse.ArgumentParser(description="读取微信公众号文章，输出 JSON")
     parser.add_argument("url")
-    parser.add_argument("--browser", action="store_true", help="显示 Chrome，允许手动验证")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--browser", dest="use_browser", action="store_const", const=True,
+                       help="直接使用 Chrome（默认遇到验证时自动切换）")
+    modes.add_argument("--http-only", dest="use_browser", action="store_const", const=False,
+                       help="仅通过 HTTP 读取，不打开浏览器")
     parser.add_argument("--wait-seconds", type=int, default=20)
     parser.add_argument("--html", type=Path, help="读取已保存的文章 HTML")
     parser.add_argument("--offset", type=int, default=0)
@@ -192,7 +206,7 @@ def main():
         except (OSError, ValueError) as error:
             result = {"status": "error", "message": str(error)}
     else:
-        result = asyncio.run(read_article(args.url, use_browser=args.browser,
+        result = asyncio.run(read_article(args.url, use_browser=args.use_browser,
                                           wait_seconds=args.wait_seconds,
                                           offset=args.offset, max_chars=args.max_chars))
     print(json.dumps(result, ensure_ascii=False, indent=2))

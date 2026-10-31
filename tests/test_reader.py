@@ -1,7 +1,9 @@
 import sys
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
 from mcp import ClientSession, StdioServerParameters
@@ -105,6 +107,72 @@ class NetworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["status"], "error")
 
 
+class AutomaticFallbackTests(unittest.IsolatedAsyncioTestCase):
+    async def test_verification_automatically_falls_back_with_same_options(self):
+        expected = reader.parse_article(HTML, URL, offset=5, max_chars=8)
+        with patch.object(reader, "fetch_html", return_value="环境异常，完成验证"), \
+                patch.object(reader, "read_browser", return_value=expected) as browser:
+            result = await reader.read_article(URL, offset=5, max_chars=8)
+        browser.assert_awaited_once_with(URL, 20, 5, 8)
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["text"], expected["text"])
+        self.assertEqual(result["attempted_methods"], ["http", "browser"])
+
+    async def test_explicit_http_only_never_opens_browser(self):
+        with patch.object(reader, "fetch_html", return_value="环境异常，完成验证"), \
+                patch.object(reader, "read_browser") as browser:
+            result = await reader.read_article(URL, use_browser=False)
+        browser.assert_not_awaited()
+        self.assertEqual(result["status"], "verification_required")
+        self.assertEqual(result["attempted_methods"], ["http"])
+
+    async def test_final_http_results_do_not_trigger_browser(self):
+        for html, status in [(HTML, "ok"), ("此内容已被发布者删除", "unavailable"),
+                             ("未知页面", "unsupported_page")]:
+            with self.subTest(status=status), \
+                    patch.object(reader, "fetch_html", return_value=html), \
+                    patch.object(reader, "read_browser") as browser:
+                result = await reader.read_article(URL)
+                browser.assert_not_awaited()
+                self.assertEqual(result["status"], status)
+
+    async def test_explicit_browser_skips_http(self):
+        with patch.object(reader, "fetch_html") as fetch, \
+                patch.object(reader, "read_browser", return_value=reader.parse_article(HTML, URL)):
+            result = await reader.read_article(URL, use_browser=True)
+        fetch.assert_not_awaited()
+        self.assertEqual(result["attempted_methods"], ["browser"])
+
+    async def test_remaining_verification_is_reported_without_retry_loop(self):
+        pending = reader.parse_article("环境异常，完成验证", URL)
+        with patch.object(reader, "fetch_html", return_value="环境异常，完成验证"), \
+                patch.object(reader, "read_browser", return_value=pending) as browser:
+            result = await reader.read_article(URL)
+        browser.assert_awaited_once()
+        self.assertEqual(result["status"], "verification_required")
+        self.assertIn("仍需人工验证", result["message"])
+        self.assertNotIn("text", result)
+
+    async def test_automatic_browser_failure_is_a_tool_result(self):
+        with patch.object(reader, "fetch_html", return_value="环境异常，完成验证"), \
+                patch.object(reader, "read_browser", side_effect=RuntimeError("Chrome not installed")):
+            result = await reader.read_article(URL)
+        self.assertEqual(result["status"], "browser_error")
+        self.assertEqual(result["attempted_methods"], ["http", "browser"])
+
+
+class CLITests(unittest.TestCase):
+    def test_cli_default_and_explicit_modes(self):
+        for flags, mode in [([], None), (["--browser"], True), (["--http-only"], False)]:
+            with self.subTest(flags=flags), \
+                    patch.object(sys, "argv", ["wechat-reader", URL, *flags]), \
+                    patch.object(reader, "read_article", new_callable=AsyncMock,
+                                 return_value={"status": "ok"}) as read, \
+                    redirect_stdout(StringIO()):
+                self.assertEqual(reader.main(), 0)
+                self.assertIs(read.await_args.kwargs["use_browser"], mode)
+
+
 class MCPTests(unittest.IsolatedAsyncioTestCase):
     async def test_stdio_discovery_and_real_tool_call(self):
         await self.check_tool(["-m", "wechat_reader_server"])
@@ -120,6 +188,7 @@ class MCPTests(unittest.IsolatedAsyncioTestCase):
                 await session.initialize()
                 tools = await session.list_tools()
                 self.assertEqual([tool.name for tool in tools.tools], ["read_wechat_article"])
+                self.assertIsNone(tools.tools[0].inputSchema["properties"]["use_browser"]["default"])
                 result = await session.call_tool("read_wechat_article", {"url": "file:///etc/passwd"})
                 self.assertFalse(result.isError)
                 self.assertEqual(result.structuredContent["status"], "error")

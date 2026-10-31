@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wechat-article-reader"
-version = "0.1.0"
+version = "0.1.1"
 description = "Read WeChat articles for local MCP clients"
 readme = "README.md"
 license = "MIT"
