@@ -1,0 +1,5 @@
+include server.py
+recursive-include tests *.py *.html
+prune .browser-profile
+prune .venv
+global-exclude __pycache__ *.py[cod] .DS_Store
